@@ -271,23 +271,32 @@ footer a:hover{text-decoration:underline;}
     min-width:0;
   }
 
-  /* Tables become readable cards on mobile */
-  .table-wrap{
+  /* Slot tables become cards on mobile.
+     Order and Refund tables stay in the original table format. */
+  #a-slot .table-wrap,
+  #b-slot .table-wrap{
     overflow:visible;
     max-height:none;
     border:0;
     border-radius:0;
     background:transparent;
   }
-  table,
-  tbody{
+
+  #a-slot table,
+  #a-slot tbody,
+  #b-slot table,
+  #b-slot tbody{
     display:block;
     width:100%;
   }
-  thead{
+
+  #a-slot thead,
+  #b-slot thead{
     display:none;
   }
-  tbody tr{
+
+  #a-slot tbody tr,
+  #b-slot tbody tr{
     display:block;
     width:100%;
     margin-bottom:12px;
@@ -297,10 +306,14 @@ footer a:hover{text-decoration:underline;}
     border-radius:12px;
     box-shadow:var(--sh);
   }
-  tbody tr:hover{
+
+  #a-slot tbody tr:hover,
+  #b-slot tbody tr:hover{
     background:#fff;
   }
-  tbody td{
+
+  #a-slot tbody td,
+  #b-slot tbody td{
     display:grid;
     grid-template-columns:105px minmax(0,1fr);
     gap:12px;
@@ -312,10 +325,14 @@ footer a:hover{text-decoration:underline;}
     text-align:left;
     overflow-wrap:anywhere;
   }
-  tbody td:last-child{
+
+  #a-slot tbody td:last-child,
+  #b-slot tbody td:last-child{
     border-bottom:0;
   }
-  tbody td::before{
+
+  #a-slot tbody td::before,
+  #b-slot tbody td::before{
     content:attr(data-label);
     font-size:10.5px;
     line-height:1.35;
@@ -325,17 +342,20 @@ footer a:hover{text-decoration:underline;}
     letter-spacing:.35px;
   }
 
-  /* Important slot information gets stronger emphasis */
-  tbody td[data-label="Slot"]{
+  #a-slot tbody td[data-label="Slot"],
+  #b-slot tbody td[data-label="Slot"]{
     font-size:17px;
     font-weight:800;
     color:var(--accent);
   }
-  tbody td[data-label="Product Code"]{
+
+  #a-slot tbody td[data-label="Product Code"],
+  #b-slot tbody td[data-label="Product Code"]{
     font-weight:700;
   }
 
-  .product-name-cell{
+  #a-slot .product-name-cell,
+  #b-slot .product-name-cell{
     min-width:0;
     max-width:none;
     width:100%;
@@ -344,21 +364,28 @@ footer a:hover{text-decoration:underline;}
     align-items:flex-start;
     gap:8px;
   }
-  .product-name-text{
+
+  #a-slot .product-name-text,
+  #b-slot .product-name-text{
     width:100%;
     white-space:normal;
     line-height:1.4;
   }
-  .copy-btn{
+
+  #a-slot .copy-btn,
+  #b-slot .copy-btn{
     padding:6px 9px;
   }
-  .product-thumb{
+
+  #a-slot .product-thumb,
+  #b-slot .product-thumb{
     width:78px;
     height:78px;
   }
 
   /* Product link works like a clear mobile CTA */
-  td[data-label="Link"] .lnk{
+  #a-slot td[data-label="Link"] .lnk,
+  #b-slot td[data-label="Link"] .lnk{
     display:inline-flex;
     align-items:center;
     justify-content:center;
@@ -399,7 +426,8 @@ footer a:hover{text-decoration:underline;}
   .nav-group-block{
     min-width:260px;
   }
-  tbody td{
+  #a-slot tbody td,
+  #b-slot tbody td{
     grid-template-columns:92px minmax(0,1fr);
     gap:10px;
   }
