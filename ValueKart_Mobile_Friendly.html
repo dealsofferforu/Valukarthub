@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ValueKart</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+/* ===== DESIGN TOKENS ===== */
+:root{
+  --bg:#f0f2f8;
+  --panel:#ffffff;
+  --panel-2:#f8f9fc;
+  --border:#e4e7f0;
+  --text:#111827;
+  --muted:#6b7280;
+  --accent:#4f46e5;
+  --accent-h:#4338ca;
+  --green:#16a34a; --green-bg:#dcfce7;
+  --red:#dc2626;   --red-bg:#fee2e2;
+  --amber:#d97706; --amber-bg:#fef3c7;
+  --blue:#2563eb;  --blue-bg:#dbeafe;
+  --dark:#0f172a;
+  --dark-2:#1e293b;
+  --dark-3:#334155;
+  --r:14px;
+  --sh:0 1px 3px rgba(16,24,40,.06),0 1px 2px rgba(16,24,40,.04);
+  --sh-md:0 4px 20px rgba(16,24,40,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
+
+/* ===== TOPBAR ===== */
+.topbar{background:var(--dark);color:#fff;padding:0 28px;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:70;box-shadow:0 2px 12px rgba(0,0,0,.25);}
+.brand{display:flex;align-items:center;gap:12px;}
+.brand-logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#818cf8);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0;}
+.brand-name{font-weight:700;font-size:15px;line-height:1.3;}
+.brand-sub{font-size:11px;color:#94a3b8;}
+.topbar-badge{background:var(--dark-2);border:1px solid var(--dark-3);padding:4px 12px;border-radius:20px;font-size:11.5px;color:#94a3b8;}
+
+/* ===== NAV TABS ===== */
+.nav-wrap{background:var(--panel);border-bottom:1px solid var(--border);position:sticky;top:62px;z-index:60;box-shadow:var(--sh);}
+.nav-inner{display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px;}
+/* Group blocks */
+.nav-group-block{display:flex;flex-direction:column;gap:5px;flex:1;min-width:120px;}
+.group-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;padding:1px 2px;}
+.group-label.amz{color:#4f46e5;}
+.group-label.bli{color:#ea580c;}
+/* All nav buttons */
+.nav-btn{border:1.5px solid var(--border);color:var(--muted);padding:8px 10px;border-radius:9px;cursor:pointer;font-size:12.5px;font-weight:600;white-space:nowrap;transition:.15s;background:var(--panel-2);text-align:center;}
+/* Amazon group */
+.nav-group-block.amazon .nav-btn:hover{border-color:#4f46e5;color:#4f46e5;background:#eef0fe;}
+.nav-group-block.amazon .nav-btn.active{background:#4f46e5;color:#fff;border-color:#4f46e5;}
+/* Blinkit group */
+.nav-group-block.blinkit .nav-btn:hover{border-color:#ea580c;color:#ea580c;background:#fff7ed;}
+.nav-group-block.blinkit .nav-btn.active{background:#ea580c;color:#fff;border-color:#ea580c;}
+/* Others group */
+.nav-group-block.others .nav-btn:hover{border-color:#374151;color:#374151;background:#f1f5f9;}
+.nav-group-block.others .nav-btn.active{background:#0f172a;color:#fff;border-color:#0f172a;}
+
+/* ===== MAIN ===== */
+main{padding:28px;max-width:1440px;margin:0 auto;}
+section{display:none;}
+section.active{display:block;animation:fadein .18s ease;}
+@keyframes fadein{from{opacity:0;transform:translateY(5px);}to{opacity:1;}}
+
+/* ===== CARDS ===== */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:20px;box-shadow:var(--sh);}
+.card-head{margin-bottom:18px;}
+.card-head h2{font-size:17px;font-weight:700;margin-bottom:4px;}
+.card-head p{font-size:12.5px;color:var(--muted);}
+
+/* ===== STATUS ROW ===== */
+.status-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:5px;vertical-align:middle;}
+
+/* ===== TOOLBAR ===== */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
+.toolbar input[type=text]{flex:1;min-width:240px;background:var(--panel-2);border:1.5px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:13.5px;outline:none;transition:.15s;}
+.toolbar input[type=text]:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px rgba(79,70,229,.1);}
+.toolbar select{background:var(--panel-2);border:1.5px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:13.5px;cursor:pointer;outline:none;}
+.btn{background:var(--panel-2);border:1.5px solid var(--border);color:var(--text);padding:10px 16px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;transition:.15s;}
+.btn:hover{border-color:var(--accent);color:var(--accent);}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btn.primary:hover{background:var(--accent-h);}
+
+/* ===== TABLE ===== */
+.table-wrap{overflow:auto;max-height:62vh;border:1px solid var(--border);border-radius:12px;}
+table{border-collapse:collapse;width:100%;font-size:13.5px;}
+thead th{position:sticky;top:0;background:#f1f5fb;text-align:left;padding:11px 14px;border-bottom:1.5px solid var(--border);white-space:nowrap;z-index:2;font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;color:#374151;}
+tbody td{padding:11px 14px;border-bottom:1px solid var(--border);white-space:nowrap;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:#f8f9fd;}
+
+/* ===== PRODUCT NAME COPY + IMAGE ===== */
+.product-name-cell{display:flex;align-items:center;gap:9px;min-width:260px;max-width:460px;}
+.product-name-text{white-space:normal;line-height:1.35;flex:1;}
+.copy-btn{border:1px solid #c7d2fe;background:#eef2ff;color:#4338ca;padding:5px 8px;border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;white-space:nowrap;transition:.15s;}
+.copy-btn:hover{background:#4f46e5;color:#fff;border-color:#4f46e5;}
+.copy-btn.copied{background:var(--green-bg);color:var(--green);border-color:#86efac;}
+.product-thumb{width:62px;height:62px;object-fit:contain;background:#fff;border:1px solid var(--border);border-radius:9px;padding:3px;display:block;}
+.product-thumb:hover{box-shadow:var(--sh-md);transform:scale(1.04);}
+.image-empty{color:var(--muted);font-size:12px;}
+
+/* ===== BADGES ===== */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;}
+.badge.paid{background:var(--green-bg);color:var(--green);}
+.badge.pending{background:var(--amber-bg);color:var(--amber);}
+.badge.verified{background:var(--blue-bg);color:var(--blue);}
+.badge.match{background:var(--green-bg);color:var(--green);}
+.badge.mismatch{background:var(--red-bg);color:var(--red);}
+.badge.active{background:var(--green-bg);color:var(--green);}
+.badge.inactive{background:var(--red-bg);color:var(--red);}
+
+a.lnk{color:var(--accent);font-weight:600;text-decoration:none;}
+a.lnk:hover{text-decoration:underline;}
+
+.loading,.error,.empty{padding:40px;text-align:center;color:var(--muted);font-size:13.5px;}
+.error{color:var(--red);}
+
+/* ===== DARK BLOCK (forms) ===== */
+.dark-block{background:var(--dark);border-radius:var(--r);padding:24px;margin-bottom:20px;}
+.dark-block h3{color:#fff;font-size:16px;margin-bottom:4px;}
+.dark-block .desc{color:#94a3b8;font-size:12.5px;margin-bottom:18px;}
+.forms-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;}
+.form-card{display:flex;align-items:center;gap:12px;background:var(--dark-2);border:1px solid var(--dark-3);border-radius:12px;padding:16px;text-decoration:none;color:#fff;transition:.15s;}
+.form-card:hover{border-color:#818cf8;transform:translateY(-2px);}
+.form-icon{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#818cf8);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0;}
+.form-platform{font-size:10.5px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;}
+.form-title{font-size:14.5px;font-weight:700;margin-top:2px;}
+
+/* ===== GUIDELINES ===== */
+.guideline-actions{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+.guideline-note{color:var(--muted);font-size:12.5px;margin-bottom:14px;}
+
+/* ===== YOUTUBE CARDS ===== */
+.yt-header{margin-bottom:20px;}
+.yt-header h2{font-size:20px;font-weight:800;margin-bottom:4px;}
+.yt-header p{color:var(--muted);font-size:13.5px;}
+.yt-filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
+.yt-filters input[type=text]{flex:1;min-width:220px;background:var(--panel);border:1.5px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:13.5px;outline:none;}
+.yt-filters input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,70,229,.1);}
+.yt-filters select{background:var(--panel);border:1.5px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:13.5px;cursor:pointer;outline:none;}
+.yt-status{font-size:12px;color:var(--muted);margin-bottom:14px;}
+.yt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+@media(max-width:1024px){.yt-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:640px){.yt-grid{grid-template-columns:1fr;}}
+.yt-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--sh);transition:.15s;}
+.yt-card:hover{box-shadow:var(--sh-md);transform:translateY(-2px);}
+.yt-embed{width:100%;aspect-ratio:16/9;border:none;background:#000;}
+.yt-info{padding:14px 16px 16px;}
+.yt-title{font-weight:700;font-size:14px;margin-bottom:6px;line-height:1.4;}
+.yt-meta{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.yt-cat{background:var(--blue-bg);color:var(--blue);font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;}
+.yt-date{font-size:11.5px;color:var(--muted);}
+.yt-open{display:block;width:100%;padding:9px;background:var(--red-bg);color:var(--red);border:none;border-radius:9px;cursor:pointer;font-weight:700;font-size:13px;text-align:center;text-decoration:none;transition:.15s;}
+.yt-open:hover{background:var(--red);color:#fff;}
+.yt-invalid{background:#f8f9fc;border:1px dashed var(--border);border-radius:10px;padding:20px;text-align:center;color:var(--muted);font-size:13px;}
+
+/* ===== FOOTER ===== */
+footer{text-align:center;padding:28px;color:var(--muted);font-size:12.5px;border-top:1px solid var(--border);margin-top:8px;}
+footer a{color:var(--accent);font-weight:600;text-decoration:none;}
+footer a:hover{text-decoration:underline;}
+
+@media(max-width:640px){
+  .topbar{padding:0 16px;height:56px;}
+  main{padding:16px;}
+  .card{padding:16px;}
+}
+.quick-links{display:flex;gap:10px;flex-wrap:wrap;padding:14px 16px;max-width:1440px;margin:0 auto;}
+.ql-btn{flex:1;min-width:180px;text-align:center;padding:12px 14px;border-radius:10px;font-weight:700;font-size:13px;text-decoration:none;transition:.15s;}
+.ql-btn.amz{background:#eef0fe;color:#4f46e5;border:1.5px solid #c7cbfb;}
+.ql-btn.amz:hover{background:#4f46e5;color:#fff;}
+.ql-btn.bli{background:#fff7ed;color:#ea580c;border:1.5px solid #fed7aa;}
+.ql-btn.bli:hover{background:#ea580c;color:#fff;}
+
+/* ===== MOBILE OPTIMIZATION ===== */
+@media(max-width:720px){
+  body{font-size:13px;}
+
+  .topbar{
+    height:56px;
+    padding:0 14px;
+  }
+  .brand-logo{width:32px;height:32px;border-radius:9px;}
+  .brand-name{font-size:14px;}
+  .topbar-badge{display:none;}
+
+  .nav-wrap{
+    top:56px;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .nav-wrap::-webkit-scrollbar{display:none;}
+  .nav-inner{
+    flex-wrap:nowrap;
+    width:max-content;
+    min-width:100%;
+    padding:10px 12px;
+    gap:10px;
+  }
+  .nav-group-block{
+    flex:none;
+    min-width:285px;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:6px;
+  }
+  .group-label{
+    grid-column:1/-1;
+    padding-left:2px;
+  }
+  .nav-btn{
+    padding:8px 7px;
+    font-size:11.5px;
+  }
+
+  .quick-links{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    padding:10px 12px;
+  }
+  .ql-btn{
+    min-width:0;
+    padding:10px 8px;
+    font-size:11.5px;
+  }
+
+  main{
+    padding:12px;
+  }
+  .card{
+    padding:14px;
+    margin-bottom:14px;
+    border-radius:12px;
+  }
+  .card-head{
+    margin-bottom:12px;
+  }
+  .card-head h2{
+    font-size:16px;
+  }
+  .card-head p{
+    font-size:12px;
+  }
+
+  .status-row{
+    align-items:flex-start;
+    font-size:11px;
+    margin-bottom:12px;
+  }
+  .status-row > span:last-child{
+    width:100%;
+  }
+
+  .toolbar,
+  .yt-filters{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+  .toolbar input[type=text],
+  .toolbar select,
+  .toolbar .btn,
+  .yt-filters input[type=text],
+  .yt-filters select,
+  .yt-filters .btn{
+    width:100%;
+    min-width:0;
+  }
+
+  /* Tables become readable cards on mobile */
+  .table-wrap{
+    overflow:visible;
+    max-height:none;
+    border:0;
+    border-radius:0;
+    background:transparent;
+  }
+  table,
+  tbody{
+    display:block;
+    width:100%;
+  }
+  thead{
+    display:none;
+  }
+  tbody tr{
+    display:block;
+    width:100%;
+    margin-bottom:12px;
+    padding:4px 12px;
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:12px;
+    box-shadow:var(--sh);
+  }
+  tbody tr:hover{
+    background:#fff;
+  }
+  tbody td{
+    display:grid;
+    grid-template-columns:105px minmax(0,1fr);
+    gap:12px;
+    align-items:start;
+    width:100%;
+    padding:10px 0;
+    border-bottom:1px solid #edf0f5;
+    white-space:normal;
+    text-align:left;
+    overflow-wrap:anywhere;
+  }
+  tbody td:last-child{
+    border-bottom:0;
+  }
+  tbody td::before{
+    content:attr(data-label);
+    font-size:10.5px;
+    line-height:1.35;
+    font-weight:800;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.35px;
+  }
+
+  /* Important slot information gets stronger emphasis */
+  tbody td[data-label="Slot"]{
+    font-size:17px;
+    font-weight:800;
+    color:var(--accent);
+  }
+  tbody td[data-label="Product Code"]{
+    font-weight:700;
+  }
+
+  .product-name-cell{
+    min-width:0;
+    max-width:none;
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:8px;
+  }
+  .product-name-text{
+    width:100%;
+    white-space:normal;
+    line-height:1.4;
+  }
+  .copy-btn{
+    padding:6px 9px;
+  }
+  .product-thumb{
+    width:78px;
+    height:78px;
+  }
+
+  /* Product link works like a clear mobile CTA */
+  td[data-label="Link"] .lnk{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:38px;
+    padding:8px 14px;
+    border-radius:9px;
+    background:var(--accent);
+    color:#fff;
+    text-decoration:none;
+  }
+
+  .badge{
+    white-space:normal;
+    text-align:center;
+  }
+
+  .dark-block{
+    padding:16px;
+  }
+  .forms-grid{
+    grid-template-columns:1fr;
+  }
+
+  #guideline-frame{
+    height:68vh !important;
+  }
+
+  footer{
+    padding:20px 14px;
+    font-size:11.5px;
+  }
+}
+
+@media(max-width:390px){
+  .quick-links{
+    grid-template-columns:1fr;
+  }
+  .nav-group-block{
+    min-width:260px;
+  }
+  tbody td{
+    grid-template-columns:92px minmax(0,1fr);
+    gap:10px;
+  }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ===== TOPBAR ===== -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-logo">VK</div>
+    <div>
+      <div class="brand-name">ValueKart</div>
+      <div class="brand-sub">Real-time data</div>
+    </div>
+  </div>
+  <div class="topbar-badge" id="global-refresh">Auto-refresh: 60s</div>
+</header>
+
+<!-- ===== NAV ===== -->
+<div class="nav-wrap">
+  <div class="nav-inner">
+    <div class="nav-group-block amazon">
+      <span class="group-label amz">Amazon</span>
+      <button class="nav-btn active" data-tab="a-slot">Slot</button>
+      <button class="nav-btn" data-tab="a-orders">Order Table</button>
+      <button class="nav-btn" data-tab="a-refunds">Refund Table</button>
+    </div>
+    <div class="nav-group-block blinkit">
+      <span class="group-label bli">Blinkit</span>
+      <button class="nav-btn" data-tab="b-slot">Slot</button>
+      <button class="nav-btn" data-tab="b-orders">Order Table</button>
+      <button class="nav-btn" data-tab="b-refunds">Refund Table</button>
+    </div>
+    <div class="nav-group-block others">
+      <span class="group-label" style="color:var(--muted);">More</span>
+      <button class="nav-btn" data-tab="youtube">📺 Videos</button>
+      <button class="nav-btn" data-tab="guidelines">Guidelines</button>
+    </div>
+  </div>
+</div>
+<div class="quick-links">
+  <a class="ql-btn amz" href="https://forms.gle/iNXFwuCo7AEk3gfW8" target="_blank">📦 Amazon Order Form</a>
+  <a class="ql-btn amz" href="https://forms.gle/Ky7yMB2CdwEwnV5i8" target="_blank">↩️ Amazon Refund Form</a>
+  <a class="ql-btn bli" href="https://forms.gle/wxuXLmAvec9PxHBr9" target="_blank">📦 Blinkit Order Form</a>
+  <a class="ql-btn bli" href="https://forms.gle/WC5hKLVxb7PsaxKZ8" target="_blank">↩️ Blinkit Refund Form</a>
+</div>
+<main>
+
+<!-- ============================== AMAZON SLOT ============================== -->
+<section id="a-slot" class="active">
+  <div class="card">
+    <div class="card-head">
+      <h2>Amazon — Slot Tracking</h2>
+      <p>When Slot Show Zero Don't Place Order</p>
+    </div>
+    <div class="status-row">
+      <span><span class="dot" id="aslot-dot"></span><span id="aslot-status">Loading...</span></span>
+      <span id="aslot-updated">Last updated: —</span>
+    </div>
+    <div class="toolbar">
+      <input type="text" id="aslot-search" placeholder="Search by Slot, Product Code, Product Name...">
+      <button class="btn" onclick="loadASlot()">↻ Refresh</button>
+    </div>
+    <div class="table-wrap" id="aslot-wrap"><div class="loading">Loading...</div></div>
+  </div>
+</section>
+
+<!-- ============================== AMAZON ORDER FORM ============================== -->
+<section id="a-orders">
+  <div class="card">
+    <div class="card-head">
+      <h2>Amazon — Order Form</h2>
+      <p>Check Your Order Form Here</p>
+    </div>
+    <div class="status-row">
+      <span><span class="dot" id="aord-dot"></span><span id="aord-status">Loading...</span></span>
+      <span id="aord-updated">Last updated: —</span>
+    </div>
+    <div class="toolbar">
+      <input type="text" id="aord-search" placeholder="Search by Order ID, Product ID...">
+      <button class="btn" onclick="loadAOrders()">↻ Refresh</button>
+    </div>
+    <div class="table-wrap" id="aord-wrap"><div class="loading">Loading...</div></div>
+  </div>
+</section>
+
+<!-- ============================== AMAZON REFUND FORM ============================== -->
+<section id="a-refunds">
+  <div class="card">
+    <div class="card-head">
+      <h2>Amazon — Refund Form</h2>
+      <p>Check Your Payment Here</p>
+    </div>
+    <div class="status-row">
+      <span><span class="dot" id="aref-dot"></span><span id="aref-status">Loading...</span></span>
+      <span id="aref-updated">Last updated: —</span>
+    </div>
+    <div class="toolbar">
+      <input type="text" id="aref-search" placeholder="Search by ORDER ID, Order Code...">
+      <button class="btn" onclick="loadARefunds()">↻ Refresh</button>
+    </div>
+    <div class="table-wrap" id="aref-wrap"><div class="loading">Loading...</div></div>
+  </div>
+</section>
+
+<!-- ============================== BLINKIT SLOT ============================== -->
+<section id="b-slot">
+  <div class="card">
+    <div class="card-head">
+      <h2>Blinkit — Slot Tracking</h2>
+      <p>When Slot Show Zero Don't Place Order</p>
+    </div>
+    <div class="status-row">
+      <span><span class="dot" id="bslot-dot"></span><span id="bslot-status">Loading...</span></span>
+      <span id="bslot-updated">Last updated: —</span>
+    </div>
+    <div class="toolbar">
+      <input type="text" id="bslot-search" placeholder="Search by Slot, Product Code, Product Name...">
+      <button class="btn" onclick="loadBSlot()">↻ Refresh</button>
+    </div>
+    <div class="table-wrap" id="bslot-wrap"><div class="loading">Loading...</div></div>
+  </div>
+</section>
+
+<!-- ============================== BLINKIT ORDER FORM ============================== -->
+<section id="b-orders">
+  <div class="card">
+    <div class="card-head">
+      <h2>Blinkit — Order Form</h2>
+      <p>Check Your Order Form Here</p>
+    </div>
+    <div class="status-row">
+      <span><span class="dot" id="bord-dot"></span><span id="bord-status">Loading...</span></span>
+      <span id="bord-updated">Last updated: —</span>
+    </div>
+    <div class="toolbar">
+      <input type="text" id="bord-search" placeholder="Search by Order ID, Product Code...">
+      <button class="btn" onclick="loadBOrders()">↻ Refresh</button>
+    </div>
+    <div class="table-wrap" id="bord-wrap"><div class="loading">Loading...</div></div>
+  </div>
+</section>
+
+<!-- ============================== BLINKIT REFUND FORM ============================== -->
+<section id="b-refunds">
+  <div class="card">
+    <div class="card-head">
+      <h2>Blinkit — Refund Form</h2>
+      <p>Check Your Payment Here</p>
+    </div>
+    <div class="status-row">
+      <span><span class="dot" id="bref-dot"></span><span id="bref-status">Loading...</span></span>
+      <span id="bref-updated">Last updated: —</span>
+    </div>
+    <div class="toolbar">
+      <input type="text" id="bref-search" placeholder="Search by Order ID, Product Code...">
+      <button class="btn" onclick="loadBRefunds()">↻ Refresh</button>
+    </div>
+    <div class="table-wrap" id="bref-wrap"><div class="loading">Loading...</div></div>
+  </div>
+</section>
+
+<!-- ============================== YOUTUBE VIDEOS ============================== -->
+<section id="youtube">
+  <div class="card">
+    <div class="yt-header">
+      <h2>Training &amp; Guideline Videos</h2>
+      <p>Latest video instructions updated live from Google Sheet</p>
+    </div>
+    <div class="status-row">
+      <span><span class="dot" id="yt-dot"></span><span id="yt-status">Loading...</span></span>
+      <span id="yt-updated">Last updated: —</span>
+    </div>
+    <div class="yt-filters">
+      <input type="text" id="yt-search" placeholder="Search by video title...">
+      <select id="yt-cat"><option value="">All Categories</option></select>
+      <button class="btn" onclick="loadYoutube()">↻ Refresh</button>
+    </div>
+    <div class="yt-status" id="yt-count"></div>
+    <div id="yt-grid"><div class="loading">Loading videos...</div></div>
+  </div>
+</section>
+
+
+<!-- ============================== GUIDELINES ============================== -->
+<section id="guidelines">
+  <div class="card">
+    <div class="guideline-actions">
+      <button class="btn primary" onclick="refreshGuidelines()">↻ Refresh Guidelines</button>
+      <button class="btn" onclick="window.open('https://docs.google.com/document/d/e/2PACX-1vSjicG79cRogAeBaWWJF96Fv0U5ag5UVwHrIaKwkK7sy1yu1wVnXDQJMOV0D6L7r5QpNaC1wA9IyEcd/pub','_blank')">Open in New Tab ↗</button>
+    </div>
+    <div class="guideline-note">Guidelines are live and managed from Google Docs</div>
+    <iframe id="guideline-frame"
+      src="https://docs.google.com/document/d/e/2PACX-1vSjicG79cRogAeBaWWJF96Fv0U5ag5UVwHrIaKwkK7sy1yu1wVnXDQJMOV0D6L7r5QpNaC1wA9IyEcd/pub?embedded=true"
+      width="100%" height="750" style="border:0;background:white;border-radius:14px;">
+    </iframe>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  Live Review &amp; Refund Tracking Portal &nbsp;|&nbsp;
+  <a href="https://docs.google.com/document/d/e/2PACX-1vSjicG79cRogAeBaWWJF96Fv0U5ag5UVwHrIaKwkK7sy1yu1wVnXDQJMOV0D6L7r5QpNaC1wA9IyEcd/pub" target="_blank">Read Guideline</a>
+</footer>
+
+<script>
+// =============================================================
+//  EASY-EDIT SECTION — change only these values if sheets change
+// =============================================================
+const ASLOT_ID   = "1UgHLQOXuX6n5wLu4-KL9Su2icQF1zOBOEEyiJt5PcrY"; const ASLOT_GID   = "0";
+const AORD_ID    = "1pMW7EgU1Hfg46gSYiItMTQAmBzI4Px7QB8beHH7t_Pg";  const AORD_GID    = "0";
+const AREF_ID    = "1N2zBXgNIT3pOfuE7WXviyxbzBEOtmMJGPHWcUc1pEOY";  const AREF_GID    = "0";
+const BORD_ID    = "1Ckn-UZt66vqYN-dM_Gg4jqFqQHxP6EXsap5tGvRoQlI"; const BORD_GID    = "0";
+const BREF_ID    = "1zVuEThP1SaNWvZU3a7ZfbWJPm1mXRX99JzhW5LiCfyw";  const BREF_GID    = "0";
+const BSLOT_ID   = "1LLCIx-mj_cPjaz0k64I8RAj5b0e_FffHWi9rJ2RLkAA"; const BSLOT_GID   = "0";
+// YouTube tab: open that sheet's "YouTube" tab, copy gid= from URL, paste below
+const YT_ID      = "1aN3B_4AJbi0jI7A6Jksema2QJbQkNkyS7sNCsJCCbeA";  const YT_GID      = "0";
+
+function csvUrl(id, gid){ return "https://docs.google.com/spreadsheets/d/"+id+"/gviz/tq?tqx=out:csv&gid="+gid; }
+
+const ASLOT_CSV   = csvUrl(ASLOT_ID,  ASLOT_GID);
+const AORD_CSV    = csvUrl(AORD_ID,   AORD_GID);
+const AREF_CSV    = csvUrl(AREF_ID,   AREF_GID);
+const BORD_CSV    = csvUrl(BORD_ID,   BORD_GID);
+const BREF_CSV    = csvUrl(BREF_ID,   BREF_GID);
+const BSLOT_CSV   = csvUrl(BSLOT_ID,  BSLOT_GID);
+const YOUTUBE_CSV_URL = csvUrl(YT_ID, YT_GID);
+
+// Column maps — edit these to change visible columns
+// For slot images, add a Google Sheet column named exactly "Image" and paste a public image URL in each row.
+const ASLOT_COLS  = ["Slot","Product Code","Review Slot","Rating Slot","Reel on insta+ video Review on amazon","Product Name","Image","Link"];
+const AORD_COLS   = ["Timestamp","Name","Order id","Delivery Date","Product ID","Days Delivered","Take Deals","status"];
+const AREF_COLS   = ["Timestamp","Reviewer Name","ORDER ID","Order Code","Payment Date","Payment","Refund days left","Price Check","Checked List"];
+const BORD_COLS   = ["Timestamp","Name","Order ID","Delivery Date","Product Code","Location","Take Deals","status"];
+const BREF_COLS   = ["Timestamp","Reviewer Name","Order ID","Delivery Date","Product Code","Payment date","Refund days left","payment status"];
+const BSLOT_COLS  = ["Slot","Product Code","LOC","Review Slot","Rating Slot","Reel on insta+ video Review on amazon","Product Name","Image","Link"];
+
+// =============================================================
+// DATA STORE
+// =============================================================
+const DATA = { aslot:[], aord:[], aref:[], bord:[], bref:[], bslot:[], yt:[] };
+
+// =============================================================
+// CSV PARSER (PapaParse — robust against embedded quotes/commas/newlines)
+// =============================================================
+function parseCSV(text){
+  const result = Papa.parse(text, { header:true, skipEmptyLines:true });
+  return result.data.map(row=>{
+    const obj={};
+    Object.keys(row).forEach(k=>obj[k.trim()]=(row[k]||'').toString().trim());
+    return obj;
+  });
+}
+
+function bust(url){return url+(url.includes('?')?'&':'?')+'_t='+Date.now();}
+
+async function fetchCSV(url){
+  const res=await fetch(bust(url),{cache:'no-store'});
+  if(!res.ok)throw new Error('HTTP '+res.status+' — ensure the sheet is shared: Anyone with link → Viewer');
+  return parseCSV(await res.text());
+}
+
+function g(row,col){return row&&row[col]!==undefined?row[col]:'';}
+
+// Slot rows are visible only when the sheet's Status column is set to Active.
+// Header matching is case-insensitive, so Status/status/STATUS all work.
+function isActiveSlot(row){
+  if(!row)return false;
+  const statusKey=Object.keys(row).find(key=>key.toLowerCase().trim()==='status');
+  const status=statusKey?(row[statusKey]||'').toString().toLowerCase().trim():'';
+  return status==='active';
+}
+
+function setStatus(dotId,statusId,updId,ok,msg){
+  document.getElementById(dotId).style.background=ok?'var(--green)':'var(--red)';
+  document.getElementById(statusId).textContent=msg;
+  document.getElementById(updId).textContent='Last updated: '+new Date().toLocaleTimeString();
+}
+
+// =============================================================
+// BADGE HELPERS
+// =============================================================
+function payBadge(v){
+  const s=(v||'').toLowerCase();
+  if(!s)return'<span class="badge pending">Pending</span>';
+  if(/(done|paid|correct|complete)/.test(s))return'<span class="badge paid">Paid</span>';
+  return'<span class="badge pending">Pending</span>';
+}
+function checkedBadge(v){
+  const s=(v||'').toLowerCase();
+  if(/(verified|done|yes)/.test(s))return'<span class="badge verified">Need UnVerified Review</span>';
+  return v||'—';
+}
+function matchBadge(v){
+  const s=(v||'').toLowerCase();
+  if(/(mismatch|no|wrong)/.test(s))return'<span class="badge mismatch"> 🚫 Wrong Delivery SS</span>';
+  if(/(match|yes|same)/.test(s))return'<span class="badge match">Match</span>';
+  return v||'—';
+}
+
+// =============================================================
+// GENERIC TABLE RENDERER
+// =============================================================
+function escapeHtml(value){
+  return String(value??'')
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'",'&#039;');
+}
+function escapeAttr(value){return escapeHtml(value);}
+
+function normalizeImageUrl(url){
+  const raw=(url||'').trim();
+  if(!raw)return '';
+
+  // Converts common Google Drive sharing links into a displayable thumbnail URL.
+  let m=raw.match(/drive\.google\.com\/file\/d\/([^/]+)/i);
+  if(m)return 'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w300';
+  m=raw.match(/[?&]id=([^&#]+)/i);
+  if(raw.includes('drive.google.com')&&m)return 'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w300';
+
+  return raw;
+}
+
+async function copyCellText(btn){
+  const value=btn.dataset.copy||'';
+  try{
+    if(navigator.clipboard&&window.isSecureContext){
+      await navigator.clipboard.writeText(value);
+    }else{
+      const ta=document.createElement('textarea');
+      ta.value=value;
+      ta.style.position='fixed';
+      ta.style.opacity='0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+    const old=btn.innerHTML;
+    btn.innerHTML='✓ Copied';
+    btn.classList.add('copied');
+    setTimeout(()=>{btn.innerHTML=old;btn.classList.remove('copied');},1400);
+  }catch(err){
+    alert('Copy failed. Please select and copy the product name manually.');
+  }
+}
+
+function renderTable(wrapId, rows, cols, linkCols, paymentCols, checkedCols, matchCols, copyCols, imageCols){
+  const wrap=document.getElementById(wrapId);
+  if(!rows.length){
+    wrap.innerHTML='<div class="empty">No matching records.</div>';
+    return;
+  }
+
+  let html='<table><thead><tr>'+
+    cols.map(c=>'<th>'+escapeHtml(c)+'</th>').join('')+
+    '</tr></thead><tbody>';
+
+  rows.forEach(r=>{
+    html+='<tr>';
+
+    cols.forEach(c=>{
+      const v=g(r,c);
+      const label=escapeAttr(c);
+      const tdOpen='<td data-label="'+label+'">';
+
+      if(linkCols&&linkCols.includes(c)){
+        html+=tdOpen+
+          (v?'<a class="lnk" href="'+escapeAttr(v)+'" target="_blank" rel="noopener noreferrer">Open Product ↗</a>':'—')+
+          '</td>';
+
+      }else if(imageCols&&imageCols.includes(c)){
+        const src=normalizeImageUrl(v);
+        html+=tdOpen+
+          (src
+            ?'<a href="'+escapeAttr(src)+'" target="_blank" rel="noopener noreferrer" title="Open full image">'+
+             '<img class="product-thumb" src="'+escapeAttr(src)+'" alt="Product image" loading="lazy" '+
+             'onerror="this.style.display=\'none\';this.parentElement.nextElementSibling.style.display=\'inline\';">'+
+             '</a><span class="image-empty" style="display:none">Image unavailable</span>'
+            :'<span class="image-empty">—</span>')+
+          '</td>';
+
+      }else if(copyCols&&copyCols.includes(c)){
+        html+=tdOpen+
+          '<div class="product-name-cell">'+
+          '<span class="product-name-text">'+escapeHtml(v||'—')+'</span>'+
+          (v?'<button class="copy-btn" type="button" data-copy="'+escapeAttr(v)+'" onclick="copyCellText(this)" title="Copy product name">⧉ Copy</button>':'')+
+          '</div></td>';
+
+      }else if(paymentCols&&paymentCols.includes(c)){
+        html+=tdOpen+payBadge(v)+'</td>';
+
+      }else if(checkedCols&&checkedCols.includes(c)){
+        html+=tdOpen+checkedBadge(v)+'</td>';
+
+      }else if(matchCols&&matchCols.includes(c)){
+        html+=tdOpen+matchBadge(v)+'</td>';
+
+      }else{
+        html+=tdOpen+escapeHtml(v||'—')+'</td>';
+      }
+    });
+
+    html+='</tr>';
+  });
+
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+}
+
+// =============================================================
+// LOADERS
+// =============================================================
+async function loadASlot(){
+  const w='aslot-wrap';
+  try{
+    DATA.aslot=await fetchCSV(ASLOT_CSV);
+    const activeCount=DATA.aslot.filter(isActiveSlot).length;
+    setStatus('aslot-dot','aslot-status','aslot-updated',true,'Live — '+activeCount+' active records');
+    renderASlot();
+  }catch(e){setStatus('aslot-dot','aslot-status','aslot-updated',false,'Error');document.getElementById(w).innerHTML='<div class="error">'+e.message+'</div>';}
+}
+function renderASlot(){
+  const q=(document.getElementById('aslot-search').value||'').toLowerCase().trim();
+  const rows=DATA.aslot.filter(r=>isActiveSlot(r)&&(!q||(g(r,'Slot').toLowerCase().includes(q)||g(r,'Product Code').toLowerCase().includes(q)||g(r,'Product Name').toLowerCase().includes(q))));
+  renderTable('aslot-wrap',rows,ASLOT_COLS,['Link'],null,null,null,['Product Name'],['Image']);
+}
+
+async function loadAOrders(){
+  const w='aord-wrap';
+  try{
+    DATA.aord=await fetchCSV(AORD_CSV);
+    setStatus('aord-dot','aord-status','aord-updated',true,'Live — '+DATA.aord.length+' records');
+    renderAOrders();
+  }catch(e){setStatus('aord-dot','aord-status','aord-updated',false,'Error');document.getElementById(w).innerHTML='<div class="error">'+e.message+'</div>';}
+}
+function renderAOrders(){
+  const q=(document.getElementById('aord-search').value||'').toLowerCase();
+  const rows=DATA.aord.filter(r=>!q||(g(r,'Order id').toLowerCase().includes(q)||g(r,'Product ID').toLowerCase().includes(q)));
+  renderTable('aord-wrap',rows,AORD_COLS,null,null,null,null);
+}
+
+async function loadARefunds(){
+  const w='aref-wrap';
+  try{
+    DATA.aref=await fetchCSV(AREF_CSV);
+    setStatus('aref-dot','aref-status','aref-updated',true,'Live — '+DATA.aref.length+' records');
+    renderARefunds();
+  }catch(e){setStatus('aref-dot','aref-status','aref-updated',false,'Error');document.getElementById(w).innerHTML='<div class="error">'+e.message+'</div>';}
+}
+function renderARefunds(){
+  const q=(document.getElementById('aref-search').value||'').toLowerCase();
+  const rows=DATA.aref.filter(r=>!q||(g(r,'ORDER ID').toLowerCase().includes(q)||g(r,'Order Code').toLowerCase().includes(q)));
+  renderTable('aref-wrap',rows,AREF_COLS,null,['Payment'],['Checked List'],['Price Check']);
+}
+
+async function loadBSlot(){
+  const w='bslot-wrap';
+  try{
+    DATA.bslot=await fetchCSV(BSLOT_CSV);
+    const activeCount=DATA.bslot.filter(isActiveSlot).length;
+    setStatus('bslot-dot','bslot-status','bslot-updated',true,'Live — '+activeCount+' active records');
+    renderBSlot();
+  }catch(e){setStatus('bslot-dot','bslot-status','bslot-updated',false,'Error');document.getElementById(w).innerHTML='<div class="error">'+e.message+'</div>';}
+}
+function renderBSlot(){
+  const q=(document.getElementById('bslot-search').value||'').toLowerCase().trim();
+  const rows=DATA.bslot.filter(r=>isActiveSlot(r)&&(!q||(g(r,'Slot').toLowerCase().includes(q)||g(r,'Product Code').toLowerCase().includes(q)||g(r,'Product Name').toLowerCase().includes(q))));
+  renderTable('bslot-wrap',rows,BSLOT_COLS,['Link'],null,null,null,['Product Name'],['Image']);
+}
+
+async function loadBOrders(){
+  const w='bord-wrap';
+  try{
+    DATA.bord=await fetchCSV(BORD_CSV);
+    setStatus('bord-dot','bord-status','bord-updated',true,'Live — '+DATA.bord.length+' records');
+    renderBOrders();
+  }catch(e){setStatus('bord-dot','bord-status','bord-updated',false,'Error');document.getElementById(w).innerHTML='<div class="error">'+e.message+'</div>';}
+}
+function renderBOrders(){
+  const q=(document.getElementById('bord-search').value||'').toLowerCase();
+  const rows=DATA.bord.filter(r=>!q||(g(r,'Order ID').toLowerCase().includes(q)||g(r,'Product Code').toLowerCase().includes(q)));
+  renderTable('bord-wrap',rows,BORD_COLS,null,null,null,null);
+}
+
+async function loadBRefunds(){
+  const w='bref-wrap';
+  try{
+    DATA.bref=await fetchCSV(BREF_CSV);
+    setStatus('bref-dot','bref-status','bref-updated',true,'Live — '+DATA.bref.length+' records');
+    renderBRefunds();
+  }catch(e){setStatus('bref-dot','bref-status','bref-updated',false,'Error');document.getElementById(w).innerHTML='<div class="error">'+e.message+'</div>';}
+}
+function renderBRefunds(){
+  const q=(document.getElementById('bref-search').value||'').toLowerCase();
+  const rows=DATA.bref.filter(r=>!q||(g(r,'Order ID').toLowerCase().includes(q)||g(r,'Product Code').toLowerCase().includes(q)));
+  renderTable('bref-wrap',rows,BREF_COLS,null,['payment status'],null,null);
+}
+
+// =============================================================
+// YOUTUBE
+// =============================================================
+function extractYtId(url){
+  if(!url)return null;
+  let m;
+  m=url.match(/[?&]v=([^&#]+)/);       if(m)return m[1];
+  m=url.match(/youtu\.be\/([^?&#]+)/); if(m)return m[1];
+  m=url.match(/shorts\/([^?&#]+)/);    if(m)return m[1];
+  return null;
+}
+
+function isVisible(row){
+  const s=(g(row,'Status')||'').toLowerCase().trim();
+  if(['inactive','hide','no'].includes(s))return false;
+  return true;
+}
+
+async function loadYoutube(){
+  const grid=document.getElementById('yt-grid');
+  try{
+    DATA.yt=await fetchCSV(YOUTUBE_CSV_URL);
+    setStatus('yt-dot','yt-status','yt-updated',true,'Live — '+DATA.yt.length+' entries');
+    // Populate categories
+    const cats=[...new Set(DATA.yt.filter(isVisible).map(r=>g(r,'Category')).filter(Boolean))].sort();
+    const sel=document.getElementById('yt-cat');
+    const curVal=sel.value;
+    sel.innerHTML='<option value="">All Categories</option>'+cats.map(c=>'<option value="'+c+'">'+c+'</option>').join('');
+    sel.value=cats.includes(curVal)?curVal:'';
+    renderYoutube();
+  }catch(e){
+    setStatus('yt-dot','yt-status','yt-updated',false,'Error');
+    grid.innerHTML='<div class="error">'+e.message+'</div>';
+  }
+}
+function renderYoutube(){
+  const grid=document.getElementById('yt-grid');
+  const q=(document.getElementById('yt-search').value||'').toLowerCase();
+  const cat=document.getElementById('yt-cat').value;
+  const rows=DATA.yt.filter(r=>{
+    if(!isVisible(r))return false;
+    if(q&&!g(r,'Title').toLowerCase().includes(q))return false;
+    if(cat&&g(r,'Category')!==cat)return false;
+    return true;
+  });
+  document.getElementById('yt-count').textContent='Showing '+rows.length+' video'+(rows.length!==1?'s':'');
+  if(!rows.length){grid.innerHTML='<div class="empty">No videos found.</div>';return;}
+  let html='<div class="yt-grid">';
+  rows.forEach(r=>{
+    const title=g(r,'Title')||'Untitled';
+    const url=g(r,'YouTube Link')||'';
+    const cat=g(r,'Category')||'';
+    const date=g(r,'Added Date')||'';
+    const ytId=extractYtId(url);
+    const embedUrl=ytId?'https://www.youtube.com/embed/'+ytId+'?rel=0':'';
+    html+='<div class="yt-card">';
+    if(embedUrl){
+      html+='<iframe class="yt-embed" src="'+embedUrl+'" allowfullscreen loading="lazy"></iframe>';
+    }else{
+      html+='<div class="yt-invalid">⚠ Invalid YouTube link</div>';
+    }
+    html+='<div class="yt-info">';
+    html+='<div class="yt-title">'+title+'</div>';
+    html+='<div class="yt-meta">';
+    if(cat)html+='<span class="yt-cat">'+cat+'</span>';
+    if(date)html+='<span class="yt-date">'+date+'</span>';
+    html+='</div>';
+    if(url)html+='<a class="yt-open" href="'+url+'" target="_blank">▶ Open on YouTube</a>';
+    html+='</div></div>';
+  });
+  html+='</div>';
+  grid.innerHTML=html;
+}
+
+// =============================================================
+// GUIDELINES
+// =============================================================
+function refreshGuidelines(){
+  const f=document.getElementById('guideline-frame');
+  f.src=f.src.split('#')[0]+'#'+Date.now();
+}
+
+// =============================================================
+// TAB SWITCHING
+// =============================================================
+document.querySelectorAll('.nav-btn[data-tab]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-btn[data-tab]').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('main section').forEach(s=>s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+// =============================================================
+// SEARCH LISTENERS
+// =============================================================
+document.getElementById('aslot-search').addEventListener('input',renderASlot);
+document.getElementById('aord-search').addEventListener('input',renderAOrders);
+document.getElementById('aref-search').addEventListener('input',renderARefunds);
+document.getElementById('bslot-search').addEventListener('input',renderBSlot);
+document.getElementById('bord-search').addEventListener('input',renderBOrders);
+document.getElementById('bref-search').addEventListener('input',renderBRefunds);
+document.getElementById('yt-search').addEventListener('input',renderYoutube);
+document.getElementById('yt-cat').addEventListener('change',renderYoutube);
+
+// =============================================================
+// INIT + AUTO-REFRESH
+// =============================================================
+function loadAll(){
+  loadASlot();
+  loadAOrders();
+  loadARefunds();
+  loadBSlot();
+  loadBOrders();
+  loadBRefunds();
+  loadYoutube();
+}
+loadAll();
+setInterval(loadAll,60000);
+</script>
+</body>
+</html>
